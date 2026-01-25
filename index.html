@@ -44,11 +44,21 @@ let step = 0;
 const data = {};
 
 const flowerImages = {
-  Roses: 'assets/rose.jpg',
+  Roses: 'assets/rose.png',
   Sunflowers: 'assets/sunflower.png',
   Carnation: 'assets/carnation.png'
 };
-  
+
+  const fillerImages = {
+  'Eucalyptus': 'assets/eucalyptus.png',
+  'Babys Breath': 'assets/babys-breath.png',
+  'Lavender': 'assets/lavender.png',
+  'Gypsy': 'assets/gypsy.png',
+  'White Radus': 'assets/white-radus.png',
+  'Statice': 'assets/statice.png',
+  'Chamomile': 'assets/chamomile.png,
+  'Greens': 'assets/greens.png'
+};
 
 const stepsEl = document.getElementById('steps');
 const prevBtn = document.getElementById('prevBtn');
@@ -56,10 +66,25 @@ const nextBtn = document.getElementById('nextBtn');
 
 const imagesrc = 'https://placehold.co/50x50';
 
-function card(key, val) {
+/*function card(key, val) {
   return `
     <div onclick="select('${key}','${val}')" data-key="${key}" data-val="${val}" class="card p-4 text-center">
       <img src="${imagesrc}" class="w-full aspect-square object-cover rounded-xl mb-2"/>
+      <p class="font-medium">${val}</p>
+    </div>`;
+}*/
+function card(key, val) {
+  const img =
+    flowerImages[val] ||
+    fillerImages?.[val] ||
+    imagesrc;
+
+  return `
+    <div onclick="select('${key}','${val}')"
+         data-key="${key}"
+         data-val="${val}"
+         class="card p-4 text-center">
+      <img src="${img}" class="w-full aspect-square object-cover rounded-xl mb-2"/>
       <p class="font-medium">${val}</p>
     </div>`;
 }
@@ -79,7 +104,8 @@ function renderFillers() {
       <div class="grid grid-cols-3 gap-3">
         ${['Eucalyptus','Babys Breath','Lavender', 'Gypsy', 'White Radus', 'Statice', 'Chamomile', 'Greens'].map(f => `
           <div onclick="selectFiller(${i}, '${f}')" class="card p-2 text-center ${data.fillers?.[i] === f ? 'active' : ''}">
-           <img src="${imagesrc}" class="w-full aspect-square object-cover rounded-xl mb-2"/>
+           <img src="${fillerImages[f] || imagesrc}"
+     class="w-full aspect-square object-cover rounded-xl mb-2"/>
             <p class="text-xs">${f}</p>
           </div>`).join('')}
       </div>
@@ -220,7 +246,8 @@ ${['Medium','Large'].includes(data.size) ? `
     class="card p-3 text-center ${
       data.mainFlowers?.[i]?.type === f ? 'active' : ''
     }">
-    <img src="${imagesrc}" class="w-full aspect-square object-cover rounded-xl mb-2"/>
+   <img src="${flowerImages[f] || imagesrc}"
+     class="w-full aspect-square object-cover rounded-xl mb-2"/>
     <p class="text-xs">${f}</p>
   </div>
 `).join('')}
@@ -431,4 +458,5 @@ render();
 </body>
 
 </html>
+
 
