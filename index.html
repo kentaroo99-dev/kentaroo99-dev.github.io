@@ -43,6 +43,13 @@
 let step = 0;
 const data = {};
 
+const flowerImages = {
+  Roses: 'assets/rose.jpg',
+  Sunflowers: 'assets/sunflower.png',
+  Carnation: 'assets/carnation.png'
+};
+  
+
 const stepsEl = document.getElementById('steps');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
@@ -143,7 +150,7 @@ function mainFlowerCard(type, index = 0) {
   return `
     <div onclick="setMainFlower(${index}, '${type}')"
       class="card p-4 text-center ${active ? 'active' : ''}">
-      <img src="${imagesrc}" class="w-full aspect-square object-cover rounded-xl mb-2"/>
+       <img src="${flowerImages[type]}" class="w-full aspect-square object-cover rounded-xl mb-2"/>
       <p>${type}</p>
     </div>
   `;
@@ -424,3 +431,4 @@ render();
 </body>
 
 </html>
+
