@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flower Bouquet Pre-Order</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .card {
+      border-radius: 1.25rem;
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      transition: all .3s ease;
+      background: white;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,.08); }
+    .active { border-color: #fb7185; box-shadow: 0 0 0 3px rgba(251,113,133,.35); }
+
+    .step-enter { animation: stepIn .45s ease; }
+    @keyframes stepIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-rose-50 text-gray-800">
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+  <header class="text-center mb-10">
+    <h1 class="text-3xl sm:text-4xl font-semibold">Bouquet Pre-Order</h1>
+    <p class="text-sm text-gray-500 mt-2">Designed with love, wrapped with intention</p>
+  </header>
+
+  <div id="steps" class="step-enter"></div>
+
+  <div class="flex items-center justify-center mt-10">
+    <button id="prevBtn" class="px-6 py-2 rounded-full bg-gray-100 text-gray-700 hidden">Back</button>
+    <button id="nextBtn" disabled class="px-8 py-3 rounded-full bg-rose-300 text-white font-medium">Next</button>
+  </div>
+</div>
+
+<script>
+let step = 0;
+const data = {};
+
+const stepsEl = document.getElementById('steps');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+const imagesrc = 'https://placehold.co/50x50';
+
+function card(key, val) {
+  return `
+    <div onclick="select('${key}','${val}')" data-key="${key}" data-val="${val}" class="card p-4 text-center">
+      <img src="${imagesrc}" class="w-full aspect-square object-cover rounded-xl mb-2"/>
+      <p class="font-medium">${val}</p>
+    </div>`;
+}
+
+function colorCard(key, val) {
+  return `
+    <div onclick="select('${key}','${val}')" data-key="${key}" data-val="${val}" class="card p-4 text-center">
+      <div class="h-10 rounded-lg mb-2" style="background:${val}"></div>
+      <p class="text-sm font-medium">${val}</p>
+    </div>`;
+}
+
+function renderFillers() {
+  return Array.from({ length: data.fillerCount }).map((_, i) => `
+    <div>
+      <p class="text-sm mb-2">Filler ${i + 1}</p>
+      <div class="grid grid-cols-3 gap-3">
+        ${['Eucalyptus','Babys Breath','Lavender', 'Gypsy', 'White Radus', 'Statice', 'Chamomile', 'Greens'].map(f => `
+          <div onclick="selectFiller(${i}, '${f}')" class="card p-2 text-center ${data.fillers?.[i] === f ? 'active' : ''}">
+           <img src="${imagesrc}" class="w-full aspect-square object-cover rounded-xl mb-2"/>
+            <p class="text-xs">${f}</p>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+const flowerOptions = ['Roses','Sunflowers','Carnation'];
+
+function mainCountButtons(min, max) {
+  return Array.from({ length: max - min + 1 }, (_, i) => min + i)
+    .map(n => `
+      <button onclick="setMainCount(${n})"
+        class="px-4 py-2 rounded-full border ${data.mainCount===n?'bg-rose-500 text-white':'bg-white'}">
+        ${n}
+      </button>
+    `).join('');
+}
+
+function setMainCount(n){
+  data.mainCount = n;
+  data.mainFlowers = [];
+  render();
+}
+
+function setMainMode(mode){
+  data.mainMode = mode;
+
+  if(mode === 'half'){
+    data.mainFlowers = [{}, {}];   
+  } else {
+    data.mainFlowers = [{}];
+  }
+
+  render();
+}
+
+function setMainFlower(index, type){
+  if(!data.mainFlowers[index]) data.mainFlowers[index] = {};
+  data.mainFlowers[index].type = type;
+  
+  if(data.mainMode === 'single'){
+    data.mainFlowers[0] = {
+      type,
+      count: data.mainCount
+    };
+  }
+
+  if(data.mainMode === 'half'){
+    const a = Math.ceil(data.mainCount / 2);
+    const b = Math.floor(data.mainCount / 2);
+    data.mainFlowers[0].count = a;
+    data.mainFlowers[1].count = b;
+  }
+
+  validate();
+  render();  
+}
+
+
+function setMainFlowerCount(index, count){
+  if(!data.mainFlowers[index]) data.mainFlowers[index] = {};
+  data.mainFlowers[index].count = count;
+  validate();
+}
+
+function mainFlowerCard(type, index = 0) {
+  const active = data.mainFlowers?.[index]?.type === type;
+  return `
+    <div onclick="setMainFlower(${index}, '${type}')"
+      class="card p-4 text-center ${active ? 'active' : ''}">
+      <img src="${imagesrc}" class="w-full aspect-square object-cover rounded-xl mb-2"/>
+      <p>${type}</p>
+    </div>
+  `;
+}
+
+
+const steps = [
+  () => `
+    <h2 class="text-xl font-medium text-center">How big is your love?</h2>
+    <p class="text-sm mb-4 text-center">Please choose a bouquet size.</p>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">${['Small','Medium','Large','Custom'].map(s => card('size', s)).join('')}</div>`,
+
+  // () => `
+  //   <h2 class="text-xl text-center font-medium">Main Flower</h2>
+  //   <p class="text-sm mb-4 text-center">What could be their favorite?&nbsp;(Don't&nbsp;guess,&nbsp;you&nbsp;should&nbsp;know it!).</p>
+  //   ${data.size === 'Custom' ? `<input type="number" min="11" class="w-full p-3 rounded-xl border mb-1" placeholder="Number of main flowers" oninput="data.mainCount=this.value;validate()" /> <p class="text-xs mb-6 italic text-gray-500 text-center">For custom bouquets, minimum of 11 flowers above.</p>` : ''}
+  //   <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">${['Roses','Sunflowers','Carnation'].map(f => card('mainFlower', f)).join('')}</div>`,
+    () => `
+<h2 class="text-xl text-center font-medium">Main Flowers</h2>
+<p class="text-sm mb-4 text-center">Let’s build the heart of the bouquet</p>
+
+<!-- SMALL -->
+${data.size === 'Small' ? `
+  <p class="text-sm mb-2 text-center">How many main flowers?</p>
+  <div class="flex justify-center gap-2 mb-6">
+    ${mainCountButtons(1,3)}
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    ${flowerOptions.map(f => card('mainFlower', f)).join('')}
+  </div>
+` : ''}
+
+<!-- MEDIUM / LARGE -->
+${['Medium','Large'].includes(data.size) ? `
+  <p class="text-sm mb-2 text-center">How many main flowers?</p>
+  <div class="flex justify-center gap-2 mb-4">
+    ${data.size==='Medium' ? mainCountButtons(4,7) : mainCountButtons(8,10)}
+  </div>
+
+  ${data.mainCount ? `
+    <p class="text-sm mb-2 text-center">Flower style</p>
+    <div class="flex justify-center gap-3 mb-6">
+      <button onclick="setMainMode('single')" class="px-4 py-2 rounded-full border ${data.mainMode==='single'?'bg-rose-500 text-white':''}">
+        Same flowers
+      </button>
+      <button onclick="setMainMode('half')" class="px-4 py-2 rounded-full border ${data.mainMode==='half'?'bg-rose-500 text-white':''}">
+        Half & Half
+      </button>
+    </div>
+  `:''}
+
+ ${data.mainMode === 'single' ? `
+  <div class="grid grid-cols-2 gap-4">
+    ${flowerOptions.map(f => mainFlowerCard(f, 0)).join('')}
+  </div>
+` : ''}
+
+  ${data.mainMode === 'half' ? `
+    <div class="space-y-4">
+      ${[0,1].map(i => `
+        <div>
+          <p class="text-sm mb-2">Flower ${i+1}</p>
+          <div class="grid grid-cols-2 gap-3">
+            ${flowerOptions.map(f => `
+  <div onclick="setMainFlower(${i},'${f}')"
+    class="card p-3 text-center ${
+      data.mainFlowers?.[i]?.type === f ? 'active' : ''
+    }">
+    <img src="${imagesrc}" class="w-full aspect-square object-cover rounded-xl mb-2"/>
+    <p class="text-xs">${f}</p>
+  </div>
+`).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  ` : ''}
+` : ''}
+
+<!-- CUSTOM -->
+${data.size === 'Custom' ? `
+  <div class="bg-white rounded-3xl p-5 shadow-sm">
+    <p class="text-sm mb-3 text-center font-medium">Total main flowers</p>
+
+<input type="number" min="11"
+  class="w-full p-3 rounded-xl border mb-6 text-center"
+  placeholder="e.g. 15"
+  value="${data.mainCount || ''}"
+  onchange="
+    data.mainCount = Number(this.value);
+    if(!data.mainFlowers) data.mainFlowers = [];
+    validate();
+    render();
+  "
+/>
+
+    ${data.mainCount ? `
+      <p class="text-sm mb-4 text-center text-gray-500">
+        Distribute ${data.mainCount} flowers
+      </p>
+
+      <div class="space-y-3">
+        ${flowerOptions.map((f,i)=>`
+          <div class="flex items-center gap-4">
+            <img src="${imagesrc}" class="w-16 h-16 rounded-xl object-cover"/>
+            <div class="flex-1">
+              <p class="text-sm font-medium">${f}</p>
+<input type="number" min="0"
+  class="w-full p-2 mt-1 rounded-lg border"
+  value="${data.mainFlowers?.[i]?.count || ''}"
+  onchange="
+    if(!data.mainFlowers[${i}]) data.mainFlowers[${i}]={type:'${f}',count:0};
+    data.mainFlowers[${i}].count = Number(this.value);
+    validate();
+    render();
+  "
+/>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <p class="text-xs text-center mt-4 text-gray-500">
+        Total allocated: ${
+          data.mainFlowers.reduce((s,f)=>s+(f?.count||0),0)
+        } / ${data.mainCount}
+      </p>
+    `:''}
+  </div>
+` : ''}
+`,
+
+  () => `
+    <h2 class="text-xl text-center font-medium">Filler Flowers</h2>
+    <p class="text-sm mb-4 text-center">Something to make it prettier.</p>
+    ${data.size === 'Small'
+      ? `<div class="grid grid-cols-2 sm:grid-cols-3 gap-4">${['Eucalyptus','Babys Breath','Lavender', 'Gypsy', 'White Radus', 'Statice', 'Chamomile', 'Greens'].map(f => card('filler', f)).join('')}</div>`
+      : `<input type="number" min="1" class="w-full p-3 rounded-xl border mb-6" placeholder="How many types of fillers?" oninput="data.fillerCount=this.value; data.fillers=[]; render();" />${data.fillerCount ? renderFillers() : ''}`
+    }`,
+
+  () => `
+    <h2 class="text-xl font-medium text-center">Wrapper & Ribbon</h2>
+    <p class="text-sm mb-4 text-center">Their favorite color/s, maybe?</p>
+    <p class="text-sm text-gray-500 mb-2">Wrapper</p>
+    <div class="grid grid-cols-3 gap-4 mb-6">${['#000000','#ee87a6','#ffffff','#eec69e'].map(c => colorCard('wrapper', c)).join('')}</div>
+    <p class="text-sm text-gray-500 mb-2">Ribbon</p>
+    <div class="grid grid-cols-3 gap-4">${['#00007d','#f40009','#ffffff','#000000'].map(c => colorCard('ribbon', c)).join('')}</div>`,
+
+  () => `
+    <h2 class="text-xl font-medium text-center mb-4">Personalization</h2>
+    <div class="space-y-4">
+      <input class="w-full p-3 rounded-xl border" placeholder="From: (Your name, or 'Pookie')" oninput="data.from=this.value;validate()" />
+      <input class="w-full p-3 rounded-xl border" placeholder="To: (Their name, or 'Wookie')" oninput="data.to=this.value;validate()" />
+      <input class="w-full p-3 rounded-xl border" placeholder="One-line message (Make it sweet!)" oninput="data.message=this.value" />
+      <input class="w-full p-3 rounded-xl border" placeholder="Delivery location: (Their address or yours?)" oninput="data.location=this.value;validate()" />
+    </div>`,
+
+() => `
+  <h2 class="text-xl font-medium text-center">Order Summary</h2>
+  <p class="text-sm mb-6 text-center">Please send us a screenshot of this&nbsp;page&nbsp;to&nbsp;confirm&nbsp;your&nbsp;preorder!</p>
+  <div class="bg-white rounded-3xl p-6 shadow-sm border-2 border-gray-200">
+    <div class="border-b border-gray-300 pb-4 mb-4">
+      <p class="text-lg font-semibold">Bouquet Pre-Order</p>
+      <p class="text-sm text-gray-500">Designed with love, wrapped with intention</p>
+    </div>
+    
+    <div class="space-y-3">
+      <div class="flex justify-between">
+        <span class="font-medium">Bouquet Size:</span>
+        <span>${data.size}</span>
+      </div>
+      
+      <div class="flex justify-between">
+        <span class="font-medium">Main Flowers:</span>
+        <span>
+          ${data.size === 'Small' ? `${data.mainCount} ${data.mainFlower}` : 
+            data.mainFlowers?.map((f, i) => 
+              f?.type ? `${f.count || 0} ${f.type}${data.mainMode === 'half' && i === 0 ? ' (Half 1)' : data.mainMode === 'half' && i === 1 ? ' (Half 2)' : ''}` : ''
+            ).filter(Boolean).join(', ') || 'None selected'}
+        </span>
+      </div>
+      
+      <div class="flex justify-between">
+        <span class="font-medium">Fillers:</span>
+        <span>
+          ${data.size === 'Small' ? data.filler : 
+            data.fillers?.length ? data.fillers.join(', ') : 'None selected'}
+        </span>
+      </div>
+      
+      <div class="flex justify-between">
+        <span class="font-medium">Wrapper Color:</span>
+        <span style="background:${data.wrapper}; display:inline-block; width:20px; height:20px; border-radius:50%; border:1px solid #ccc;"></span>
+      </div>
+      
+      <div class="flex justify-between">
+        <span class="font-medium">Ribbon Color:</span>
+        <span style="background:${data.ribbon}; display:inline-block; width:20px; height:20px; border-radius:50%; border:1px solid #ccc;"></span>
+      </div>
+    </div>
+    
+    <div class="border-t border-gray-300 pt-4 mt-4 space-y-2">
+      <p class="font-medium">Personalization:</p>
+      <p><strong>From:</strong> ${data.from || 'Not specified'}</p>
+      <p><strong>To:</strong> ${data.to || 'Not specified'}</p>
+      <p><strong>Delivery Location:</strong> ${data.location || 'Not specified'}</p>
+      ${data.message ? `<p><strong>Message:</strong> <em>“${data.message}”</em></p>` : '<p><strong>Message:</strong> None</p>'}
+    </div>
+    
+    <div class="border-t border-gray-300 pt-4 mt-4 text-center text-sm text-gray-500">
+      <p>Thank you for supporting us!</br>Total flowers: ${data.size === 'Small' ? data.mainCount : data.mainFlowers?.reduce((sum, f) => sum + (f?.count || 0), 0) || 0}</p>
+    </div>
+  </div>`
+];
+
+function select(key, val) { data[key] = val; highlight(); validate(); }
+function selectFiller(i, val) { if (!data.fillers) data.fillers = []; data.fillers[i] = val; render(); }
+
+function highlight() {
+  document.querySelectorAll('[data-key]').forEach(el => {
+    el.classList.toggle('active', data[el.dataset.key] === el.dataset.val);
+  });
+}
+
+function validate() {
+  let valid = false;
+  if (step === 0) valid = !!data.size;
+  if(step === 1){
+  if(data.size === 'Small')
+    valid = data.mainCount >= 1 && data.mainFlower;
+
+else if(['Medium','Large'].includes(data.size)) {
+  if(data.mainMode === 'single'){
+    valid = !!data.mainFlowers[0]?.type;
+  }
+
+  if(data.mainMode === 'half'){
+    valid =
+      !!data.mainFlowers[0]?.type &&
+      !!data.mainFlowers[1]?.type;
+  }
+}
+
+  else if(data.size === 'Custom'){
+  const total = data.mainFlowers?.reduce((s,f)=>s+(f?.count||0),0) || 0;
+  valid =
+    data.mainCount >= 11 &&
+    data.mainFlowers.length > 0 &&
+    total === data.mainCount;
+  }
+  };
+  if (step === 2) valid = data.size === 'Small' ? !!data.filler : data.fillerCount && data.fillers?.length === Number(data.fillerCount) && data.fillers.every(Boolean);
+  if (step === 3) valid = !!data.wrapper && !!data.ribbon;
+  if (step === 4) valid = data.from && data.to && data.location;
+  if (step === 5) valid = true;
+
+  nextBtn.disabled = !valid;
+  nextBtn.classList.toggle('bg-rose-500', valid);
+  nextBtn.classList.toggle('bg-rose-300', !valid);
+}
+
+function render() {
+  stepsEl.classList.remove('step-enter');
+  void stepsEl.offsetWidth;
+  stepsEl.classList.add('step-enter');
+  stepsEl.innerHTML = steps[step]();
+  prevBtn.classList.toggle('hidden', step === 0);
+  validate();
+  highlight();
+}
+
+prevBtn.onclick = () => { step--; render(); };
+nextBtn.onclick = () => { if (step < steps.length - 1) step++; render(); };
+
+render();
+</script>
+</body>
+</html>
