@@ -61,6 +61,12 @@ const fillerImages = {
   'Greens': 'assets/greens.png'
 };
 
+const sizeImages = {
+    'Small': 'assets/small-bouquet.png',
+    'Medium': 'assets/medium-bouquet.png',
+    'Large': 'assets/large-bouquet.png',
+    'Custom': 'assets/custom-bouquet.png'
+};
 const stepsEl = document.getElementById('steps');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
@@ -75,10 +81,12 @@ const imagesrc = 'https://placehold.co/50x50';
     </div>`;
 }*/
 function card(key, val) {
-  const img =
-    flowerImages[val] ||
-    fillerImages?.[val] ||
-    imagesrc;
+  let img;
+  if (key === 'size') {
+    img = sizeImages[val];  
+  } else {
+    img = flowerImages[val] || fillerImages?.[val] || imagesrc;  // Existing logic for other keys
+  }
 
   return `
     <div onclick="select('${key}','${val}')"
@@ -89,7 +97,6 @@ function card(key, val) {
       <p class="font-medium">${val}</p>
     </div>`;
 }
-
 function colorCard(key, val) {
   return `
     <div onclick="select('${key}','${val}')" data-key="${key}" data-val="${val}" class="card p-4 text-center">
@@ -100,7 +107,7 @@ function colorCard(key, val) {
 
 function renderFillers() {
   return Array.from({ length: data.fillerCount }).map((_, i) => `
-    <div>
+    <div class="mb-6">
       <p class="text-sm mb-2">Filler ${i + 1}</p>
       <div class="grid grid-cols-3 gap-3">
         ${['Eucalyptus','Babys Breath','Lavender', 'Gypsy', 'White Radus', 'Statice', 'Chamomile', 'Greens'].map(f => `
@@ -239,7 +246,7 @@ ${['Medium','Large'].includes(data.size) ? `
   ${data.mainMode === 'half' ? `
     <div class="space-y-4">
       ${[0,1].map(i => `
-        <div>
+        <div mb-6>
           <p class="text-sm mb-2">Flower ${i+1}</p>
           <div class="grid grid-cols-2 gap-3">
             ${flowerOptions.map(f => `
@@ -313,18 +320,33 @@ ${data.size === 'Custom' ? `
 `,
 
   () => `
-    <h2 class="text-xl text-center font-medium">Filler Flowers</h2>
-    <p class="text-sm mb-4 text-center">Something to make it prettier.</p>
-    ${data.size === 'Small'
-      ? `<div class="grid grid-cols-2 sm:grid-cols-3 gap-4">${['Eucalyptus','Babys Breath','Lavender', 'Gypsy', 'White Radus', 'Statice', 'Chamomile', 'Greens'].map(f => card('filler', f)).join('')}</div>`
-      : `<input type="number" min="1" class="w-full p-3 rounded-xl border mb-6" placeholder="How many types of fillers?" oninput="data.fillerCount=this.value; data.fillers=[]; render();" />${data.fillerCount ? renderFillers() : ''}`
-    }`,
+  <h2 class="text-xl text-center font-medium">Filler Flowers</h2>
+  <p class="text-sm mb-4 text-center">Something to make it prettier.</p>
+
+  ${data.size === 'Small'
+    ? `<div class="grid grid-cols-2 sm:grid-cols-3 gap-4">${['Eucalyptus','Babys Breath','Lavender', 'Gypsy', 'White Radus', 'Statice', 'Chamomile', 'Greens'].map(f => card('filler', f)).join('')}</div>`
+    : `  <p class="text-sm mb-2 text-center">How many filler types?</p>
+<div class="flex justify-center space-x-2 mb-6">
+        <button onclick="data.fillerCount = 1; data.fillers = []; render();"
+          class="px-4 py-2 rounded-full border ${data.fillerCount === 1 ? 'bg-rose-500 text-white' : 'bg-white'}">
+          1
+        </button>
+        <button onclick="data.fillerCount = 2; data.fillers = []; render();"
+          class="px-4 py-2 rounded-full border ${data.fillerCount === 2 ? 'bg-rose-500 text-white' : 'bg-white'}">
+          2
+        </button>
+        <button onclick="data.fillerCount = 3; data.fillers = []; render();"
+          class="px-4 py-2 rounded-full border ${data.fillerCount === 3 ? 'bg-rose-500 text-white' : 'bg-white'}">
+          3
+        </button>
+      </div>${data.fillerCount ? renderFillers() : ''}`
+  }`,
 
   () => `
     <h2 class="text-xl font-medium text-center">Wrapper & Ribbon</h2>
     <p class="text-sm mb-4 text-center">Their favorite color/s, maybe?</p>
     <p class="text-sm text-gray-500 mb-2">Wrapper</p>
-    <div class="grid grid-cols-3 gap-4 mb-6">${['#000000','#ee87a6','#ffffff','#eec69e'].map(c => colorCard('wrapper', c)).join('')}</div>
+    <div class="grid grid-cols-3 gap-4 mb-6">${['#000000','#ee87a6','#ffffff','#eec69e', '#cacbcf'].map(c => colorCard('wrapper', c)).join('')}</div>
     <p class="text-sm text-gray-500 mb-2">Ribbon</p>
     <div class="grid grid-cols-3 gap-4">${['#00007d','#f40009','#ffffff','#000000'].map(c => colorCard('ribbon', c)).join('')}</div>`,
 
@@ -339,7 +361,7 @@ ${data.size === 'Custom' ? `
 
 () => `
   <h2 class="text-xl font-medium text-center">Order Summary</h2>
-  <p class="text-sm mb-6 text-center">Please send us a screenshot of this&nbsp;page&nbsp;to&nbsp;confirm&nbsp;your&nbsp;preorder!</p>
+  <p class="text-sm mb-6 text-center">Please send us a screenshot of this page to confirm your preorder! Our lovely people will also let you know the final price of your masterpiece.</p>
   <div class="bg-white rounded-3xl p-6 shadow-sm border-2 border-gray-200">
     <div class="border-b border-gray-300 pb-4 mb-4">
       <p class="text-lg font-semibold">Bouquet Pre-Order</p>
@@ -390,7 +412,7 @@ ${data.size === 'Custom' ? `
     </div>
     
     <div class="border-t border-gray-300 pt-4 mt-4 text-center text-sm text-gray-500">
-      <p>Thank you for supporting us!</br>Total flowers: ${data.size === 'Small' ? data.mainCount : data.mainFlowers?.reduce((sum, f) => sum + (f?.count || 0), 0) || 0}</p>
+      <p>Thank you for supporting us!</br>We hope you have a happy heart's day!</p>
     </div>
   </div>`
 ];
@@ -439,6 +461,7 @@ else if(['Medium','Large'].includes(data.size)) {
   nextBtn.disabled = !valid;
   nextBtn.classList.toggle('bg-rose-500', valid);
   nextBtn.classList.toggle('bg-rose-300', !valid);
+  nextBtn.style.display = (step === 5) ? 'none' : 'block';
 }
 
 function render() {
@@ -459,11 +482,3 @@ render();
 </body>
 
 </html>
-
-
-
-
-
-
-
-
