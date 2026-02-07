@@ -44,9 +44,10 @@ let step = 0;
 const data = {};
 
 const flowerImages = {
-  Roses: 'assets/rose.png',
-  Sunflowers: 'assets/sunflower.png',
-  Carnation: 'assets/carnation.png'
+  'Roses': 'assets/rose.png',
+  'Sunflowers': 'assets/sunflower.png',
+  'Pink Carnation': 'assets/carnation.png'
+  'White Carnation': 'assets/white-carnation.png'
 };
 
 const fillerImages = {
@@ -112,7 +113,7 @@ function renderFillers() {
     </div>`).join('');
 }
 
-const flowerOptions = ['Roses','Sunflowers','Carnation'];
+const flowerOptions = ['Roses','Sunflowers','Pink Carnation','White Carnation'];
 
 function mainCountButtons(min, max) {
   return Array.from({ length: max - min + 1 }, (_, i) => min + i)
@@ -458,6 +459,7 @@ render();
 </body>
 
 </html>
+
 
 
 
